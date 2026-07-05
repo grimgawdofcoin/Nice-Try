@@ -1449,8 +1449,7 @@ const C={
   aoiFill:'rgba(251,166,59,0.16)', aoiLine:'rgba(248,150,40,0.55)', aoiText:'rgba(214,120,20,0.95)',
   zig:'rgba(180,156,255,0.5)',
   veil:'rgba(255,244,250,0.84)', veilLine:'rgba(180,156,255,0.75)', veilText:'#A07FBE',
-  mI:'#79B8FF', mC:'#FBA63B', mK:'#27BD93', mPlain:'#A892B6',
-  lEntry:'#79B8FF', lStop:'#FF5C8E', lTp:'#27BD93'
+  mI:'#79B8FF', mC:'#FBA63B', mK:'#27BD93', mPlain:'#A892B6'
 };
 
 /* ticker */
@@ -1568,17 +1567,6 @@ function draw(canvas,data,opts={}){
       ctx.fillStyle=C.veilText;ctx.textAlign='center';ctx.font='700 14px "Fredoka",sans-serif';
       ctx.fillText('next move? ♡',vx+((cssW-mR)-vx)/2,mT+plotH/2);ctx.textAlign='start';
     }
-  }
-
-  if(fullyRevealed&&!thumb&&opts.levels){
-    const L=opts.levels;
-    const lines=[{v:L.entry,col:C.lEntry,lab:'ENTRY',dash:[]},{v:L.stop,col:C.lStop,lab:'SL',dash:[3,3]},{v:L.tp,col:C.lTp,lab:'TP',dash:[3,3]}];
-    ctx.font='700 9px "Quicksand",monospace';ctx.textBaseline='middle';
-    lines.forEach(li=>{const y=Y(li.v);if(y<mT||y>mT+plotH)return;
-      ctx.strokeStyle=li.col;ctx.globalAlpha=.8;ctx.lineWidth=1.2;ctx.setLineDash(li.dash);
-      ctx.beginPath();ctx.moveTo(mL,y);ctx.lineTo(cssW-mR-28,y);ctx.stroke();ctx.setLineDash([]);
-      ctx.globalAlpha=1;ctx.fillStyle=li.col;ctx.fillText(li.lab,cssW-mR-25,y);});
-    ctx.textBaseline='alphabetic';
   }
 
   if(!thumb){
@@ -1700,17 +1688,10 @@ function makeRound(seed){
   lastArch=ai;const arch=POOL[ai];const dir=arch[2][Math.floor(r()*arch[2].length)];
   return arch[0](dir,Math.floor(r()*1e9)+seed);
 }
-function levelsFor(sc){
-  if(sc.answer==='wait')return null;
-  const d=sc.tf['15M'],cs=d.candles,entry=cs[d.split].c;let stop,tp;
-  if(sc.answer==='buy'){stop=Math.min(...cs.slice(0,d.split).map(c=>c.l))-d.unit*0.5;tp=Math.max(...cs.slice(0,d.split).map(c=>c.h));if(tp<=entry)tp=entry+(entry-stop)*2;}
-  else{stop=Math.max(...cs.slice(0,d.split).map(c=>c.h))+d.unit*0.5;tp=Math.min(...cs.slice(0,d.split).map(c=>c.l));if(tp>=entry)tp=entry-(stop-entry)*2;}
-  return{entry,stop,tp};
-}
 
 /* ===================== state + UI ===================== */
 const ROUNDS=8,$=s=>document.querySelector(s);
-let session=1,round=0,picked=null,scen=null,levels=null;
+let session=1,round=0,picked=null,scen=null;
 let hits=0,answered=0,streak=0,best=0,fTrap=0,fHes=0,fSide=0;
 let revealCount=0,animTimer=null,focusKey='15M';
 
@@ -1729,7 +1710,7 @@ function redrawAll(){renderFocus();renderThumbs();}
 function renderFocus(){
   const d=scen.tf[focusKey],meta=TFS.find(t=>t.key===focusKey);
   $('#focusTf').textContent=focusKey;$('#focusRole').textContent=meta.role;
-  draw($('#focusCanvas'),d,{revealCount:picked===null?0:revealCount,levels:null});
+  draw($('#focusCanvas'),d,{revealCount:picked===null?0:revealCount});
 }
 function renderThumbs(){
   const strip=$('#tfStrip');strip.innerHTML='';
@@ -1747,7 +1728,6 @@ function newRound(){
   if(animTimer){clearInterval(animTimer);animTimer=null;}
   picked=null;revealCount=0;focusKey='15M';
   scen=makeRound(Date.now()%2147483647+session*97+round*7919);
-  levels=levelsFor(scen);
   $('#qNum').textContent=round+1;$('#qTotal').textContent=ROUNDS;$('#sessNum').textContent=session;
   $('#qTitle').textContent=scen.title;$('#qInst').textContent=scen.inst;
   $('#askBlock').style.display='';
