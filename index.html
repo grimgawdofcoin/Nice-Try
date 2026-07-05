@@ -437,6 +437,51 @@
     body::before,body::after,.deco svg,.mark,.brand .name,.tab[aria-selected="true"],.tagnum,.tagnum::before,.bg-demo{animation:none !important;transition:none !important}
     .bg-demo:hover{transform:none}
   }
+
+  /* ----- session grader tab (added, additive only) ----- */
+  :root{ --amber-soft:#FFF3DF; }
+  .gr-layout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start;margin-top:14px}
+  @media (max-width:780px){ .gr-layout{grid-template-columns:1fr} }
+  .gr-sec{background:#fff;border:2px solid var(--line);border-radius:20px;padding:16px 17px;margin-bottom:16px;box-shadow:var(--shadow-sm)}
+  .gr-sec .gr-sh{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .gr-sec .gr-sh h3{font-family:"Fredoka",sans-serif;font-weight:700;font-size:16px;color:var(--head);margin:0}
+  .gr-chip{font-family:"Fredoka",sans-serif;font-weight:700;font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;padding:4px 10px;border-radius:999px;flex:0 0 auto}
+  .gr-chip.req{background:var(--lav-soft);color:var(--lav)}
+  .gr-chip.qual{background:var(--mint-soft);color:var(--mint)}
+  .gr-chip.dq{background:var(--bear-soft);color:var(--bear)}
+  .gr-sd{font-size:12.5px;color:var(--muted);margin:2px 0 12px}
+  .gr-item{display:flex;align-items:flex-start;gap:11px;padding:9px 4px;border-radius:12px;cursor:pointer;transition:background .12s}
+  .gr-item:hover{background:var(--bg)}
+  .gr-item input{margin-top:3px;width:18px;height:18px;flex:0 0 auto;accent-color:var(--lav);cursor:pointer}
+  .gr-dqsec .gr-item input{accent-color:var(--bear)}
+  .gr-tx{font-size:13.5px;color:var(--ink)}
+  .gr-tx b{color:var(--head);font-weight:700}
+  .gr-dqsec{border-color:var(--bear-soft);background:linear-gradient(180deg,#fff,var(--bear-soft) 260%)}
+  .gr-bias{display:flex;gap:9px;margin-bottom:12px}
+  .gr-bias button{flex:1;font-family:"Fredoka",sans-serif;font-weight:700;font-size:13px;border-radius:14px;padding:10px 8px;cursor:pointer;border:2px solid var(--line);background:var(--bg);color:var(--muted);transition:.15s}
+  .gr-bias button.on.bull{border-color:var(--bull);color:var(--bull);background:var(--bull-soft)}
+  .gr-bias button.on.bear{border-color:var(--bear);color:var(--bear);background:var(--bear-soft)}
+  .gr-bias button:hover{transform:translateY(-1px)}
+  .gr-panel{position:sticky;top:96px;background:#fff;border:2px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);display:flex;flex-direction:column;align-items:center;gap:10px}
+  @media (max-width:780px){ .gr-panel{position:static} }
+  .gr-gaugewrap{position:relative;width:180px;height:180px;display:grid;place-items:center;margin:0 auto}
+  .gr-gaugewrap canvas{width:180px;height:180px;background:none;border:none;box-shadow:none;border-radius:0}
+  .gr-gaugeletter{position:absolute;font-family:"Fredoka",sans-serif;font-weight:700;font-size:44px;color:var(--head);line-height:1}
+  .gr-gaugepct{position:absolute;bottom:38px;font-family:"Quicksand",sans-serif;font-weight:700;font-size:12px;color:var(--muted)}
+  .gr-verdict{font-family:"Fredoka",sans-serif;font-weight:700;font-size:15px;text-align:center;padding:7px 14px;border-radius:999px;border:2px solid var(--line)}
+  .gr-verdict.gr-aplus{color:var(--bull);border-color:var(--bull);background:var(--bull-soft)}
+  .gr-verdict.gr-a{color:var(--lav);border-color:var(--lav);background:var(--lav-soft)}
+  .gr-verdict.gr-b{color:var(--amber);border-color:var(--amber);background:var(--amber-soft)}
+  .gr-verdict.gr-c{color:var(--bear);border-color:var(--bear);background:var(--bear-soft)}
+  .gr-verdict.gr-no{color:#fff;border-color:var(--bear);background:var(--bear)}
+  .gr-blockers{width:100%;font-size:12.5px;color:var(--ink)}
+  .gr-blockers .bt{font-family:"Fredoka",sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .gr-blockers ul{margin:0;padding-left:18px}
+  .gr-blockers li{margin:4px 0}
+  .gr-blockers li::marker{color:var(--bear)}
+  .gr-blockers.gr-ok{color:var(--bull);font-family:"Fredoka",sans-serif;font-weight:600;font-size:13px;text-align:center}
+  .gr-reset{margin-top:2px;font-family:"Fredoka",sans-serif;font-weight:700;font-size:12.5px;border-radius:999px;padding:8px 18px;cursor:pointer;border:2px solid var(--line);background:var(--bg);color:var(--muted);transition:.15s}
+  .gr-reset:hover{border-color:var(--bear);color:var(--bear)}
 </style>
 </head>
 <body>
@@ -488,6 +533,7 @@
     <button class="tab" role="tab" aria-selected="false" data-view="basics">Start Here</button>
     <button class="tab" role="tab" aria-selected="true" data-view="playbook">Playbook</button>
     <button class="tab" role="tab" aria-selected="false" data-view="drill">Drill</button>
+    <button class="tab" role="tab" aria-selected="false" data-view="grader">Grade It</button>
   </div>
 </header>
 
@@ -1432,6 +1478,74 @@
 
 
     <p class="gocta">Feeling oriented? Read the <b>Playbook</b> for the full rules, then open the <b>Drill</b> to practice on fresh charts. Come back here anytime &hearts;</p>
+  </section>
+
+  <!-- ================= GRADER ================= -->
+  <section class="view" id="view-grader" hidden>
+    <div class="drillhead">
+      <div>
+        <div class="qn">PRE-TRADE <b>CHECKLIST</b></div>
+        <h2 class="disp">Grade the setup before you click &hearts;</h2>
+      </div>
+      <div class="inst">Work it the way you'd read the chart &mdash; <b>Required</b> gates whether this is a trade at all, <b>Quality</b> sets the grade, and checking any <b>Disqualifier</b> overrides everything to a hard no.</div>
+    </div>
+
+    <div class="gr-layout">
+      <div>
+        <section class="gr-sec">
+          <div class="gr-sh"><h3 class="disp">HTF direction</h3><span class="gr-chip req">required</span></div>
+          <div class="gr-sd">What's the 4H / 1H structure telling you?</div>
+          <div class="gr-bias">
+            <button type="button" class="disp" data-bias="bull">&#9650; Bullish</button>
+            <button type="button" class="disp" data-bias="bear">&#9660; Bearish</button>
+          </div>
+        </section>
+
+        <section class="gr-sec">
+          <div class="gr-sh"><h3 class="disp">Required to trade</h3><span class="gr-chip req">required</span></div>
+          <div class="gr-sd">Miss any one of these and the method says stand down.</div>
+          <label class="gr-item"><input type="checkbox" data-w="req"><span class="gr-tx">Correction reached the <b>pre-marked AOI</b> &mdash; not entering mid-pullback.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="req"><span class="gr-tx">LTF gave a real <b>confirmation candle</b> that closed beyond the prior swing.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="req"><span class="gr-tx">Confirmation is backed by <b>two or more</b> confirming candles, not one wick.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="req"><span class="gr-tx">Stop sits beyond the correction extreme &mdash; <b>never inside</b> the correction zone.</span></label>
+        </section>
+
+        <section class="gr-sec">
+          <div class="gr-sh"><h3 class="disp">Setup quality</h3><span class="gr-chip qual">grade</span></div>
+          <div class="gr-sd">The more of these that are true, the higher the grade.</div>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">HTF and LTF direction are <b>aligned</b>.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">Correction depth sits around <b>38&ndash;62%</b> of the prior leg.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">Liquidity was <b>swept</b> before the reaction printed.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">A <b>strong displacement candle</b> drove the move.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">This is happening in the <b>London or NY</b> session.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">Risk is sized at <b>1&ndash;1.5%</b>, and this is signal <b>#1 or #2</b> today.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">Targets give at least <b>2:1</b> reward:risk.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="qual"><span class="gr-tx">Plan is set to move the stop to <b>breakeven at 1R</b>.</span></label>
+        </section>
+
+        <section class="gr-sec gr-dqsec">
+          <div class="gr-sh"><h3 class="disp">Disqualifiers</h3><span class="gr-chip dq">instant no</span></div>
+          <div class="gr-sd">Any one of these overrides the grade to <b style="color:var(--bear)">NO TRADE</b>.</div>
+          <label class="gr-item"><input type="checkbox" data-w="dq"><span class="gr-tx">Trading the <b>Indication</b> itself &mdash; the first break, before any correction.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="dq"><span class="gr-tx">Entering <b>mid-correction</b>, before price reaches the AOI.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="dq"><span class="gr-tx">Fighting or ignoring the <b>HTF bias</b>.</span></label>
+          <label class="gr-item"><input type="checkbox" data-w="dq"><span class="gr-tx">This would be a <b>3rd signal</b> today, or a revenge trade after 2 losses.</span></label>
+        </section>
+      </div>
+
+      <div class="gr-panel">
+        <div class="gr-gaugewrap">
+          <canvas id="grGauge" width="180" height="180"></canvas>
+          <div class="gr-gaugeletter" id="grGaugeLetter">&mdash;</div>
+          <div class="gr-gaugepct" id="grGaugePct"></div>
+        </div>
+        <div class="gr-verdict" id="grVerdictBadge">Start checking &hearts;</div>
+        <div class="gr-blockers" id="grBlockers"></div>
+        <button type="button" class="gr-reset disp" id="grResetBtn">Reset checklist</button>
+      </div>
+    </div>
+
+    <p class="gocta">Not financial advice &mdash; a study aid for the ICC method. Grading reflects the method's own stated rules, not a guarantee of trade outcome.</p>
   </section>
 </main>
 
@@ -2396,6 +2510,166 @@ let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{if(!$(
   aoiNew();
   hbNew();
   newB();
+})();
+</script>
+<script>
+/* ================================================================
+   SESSION GRADER (added, additive only) — pre-trade checklist tab
+   ================================================================ */
+(function(){
+  const $=s=>document.querySelector(s);
+  const STORE_KEY='cp_grader_v1';
+
+  let bias=null;
+  const reqBoxes=[...document.querySelectorAll('input[data-w="req"]')];
+  const qualBoxes=[...document.querySelectorAll('input[data-w="qual"]')];
+  const dqBoxes=[...document.querySelectorAll('input[data-w="dq"]')];
+
+  function load(){
+    try{
+      const raw=localStorage.getItem(STORE_KEY);
+      if(!raw)return;
+      const s=JSON.parse(raw);
+      bias=s.bias||null;
+      if(bias)$(`[data-bias="${bias}"]`).classList.add('on',bias==='bull'?'bull':'bear');
+      reqBoxes.forEach((b,i)=>b.checked=!!(s.req&&s.req[i]));
+      qualBoxes.forEach((b,i)=>b.checked=!!(s.qual&&s.qual[i]));
+      dqBoxes.forEach((b,i)=>b.checked=!!(s.dq&&s.dq[i]));
+    }catch(e){}
+  }
+  function save(){
+    try{
+      localStorage.setItem(STORE_KEY,JSON.stringify({
+        bias,
+        req:reqBoxes.map(b=>b.checked),
+        qual:qualBoxes.map(b=>b.checked),
+        dq:dqBoxes.map(b=>b.checked)
+      }));
+    }catch(e){}
+  }
+
+  document.querySelectorAll('.gr-bias button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const v=btn.dataset.bias;
+      bias=(bias===v)?null:v;
+      document.querySelectorAll('.gr-bias button').forEach(b=>b.classList.remove('on','bull','bear'));
+      if(bias)btn.classList.add('on',bias==='bull'?'bull':'bear');
+      save();grade();
+    });
+  });
+  [...reqBoxes,...qualBoxes,...dqBoxes].forEach(b=>b.addEventListener('change',()=>{save();grade();}));
+  const grResetBtn=$('#grResetBtn');
+  if(grResetBtn)grResetBtn.addEventListener('click',()=>{
+    bias=null;
+    document.querySelectorAll('.gr-bias button').forEach(b=>b.classList.remove('on','bull','bear'));
+    [...reqBoxes,...qualBoxes,...dqBoxes].forEach(b=>b.checked=false);
+    try{localStorage.removeItem(STORE_KEY);}catch(e){}
+    grade();
+  });
+
+  const reqLabels=[
+    'Correction reached the pre-marked AOI',
+    'LTF confirmation candle closed beyond prior swing',
+    'Two or more confirming candles',
+    'Stop beyond the correction extreme'
+  ];
+  const dqLabels=[
+    'Trading the Indication / first break',
+    'Entering mid-correction before the AOI',
+    'Fighting or ignoring the HTF bias',
+    'This would be a 3rd signal / revenge trade'
+  ];
+
+  function cssVar(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim();}
+
+  let animPct=0,animRaf=null;
+  function drawGauge(targetPct,color,pctLabel){
+    const c=$('#grGauge');if(!c)return;
+    const ctx=c.getContext('2d');
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    if(c.width!==180*dpr){c.width=180*dpr;c.height=180*dpr;}
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    function frame(){
+      animPct += (targetPct-animPct)*0.18;
+      if(Math.abs(targetPct-animPct)<0.2)animPct=targetPct;
+      ctx.clearRect(0,0,180,180);
+      const cx=90,cy=90,r=74,start=Math.PI*0.75,end=Math.PI*2.25;
+      ctx.lineCap='round';
+      ctx.lineWidth=14;
+      ctx.strokeStyle=cssVar('--faint');
+      ctx.beginPath();ctx.arc(cx,cy,r,start,end);ctx.stroke();
+      const sweep=(end-start)*(animPct/100);
+      ctx.strokeStyle=color;
+      ctx.beginPath();ctx.arc(cx,cy,r,start,start+sweep);ctx.stroke();
+      $('#grGaugePct').textContent=pctLabel!=null?pctLabel:Math.round(animPct)+'%';
+      if(animPct!==targetPct){animRaf=requestAnimationFrame(frame);}else{animRaf=null;}
+    }
+    if(animRaf)cancelAnimationFrame(animRaf);
+    frame();
+  }
+
+  function grade(){
+    if(!$('#grVerdictBadge'))return;
+    const dqHits=dqBoxes.map(b=>b.checked);
+    const dqAny=dqHits.some(Boolean);
+    const reqState=reqBoxes.map(b=>b.checked);
+    const reqAll=reqState.every(Boolean)&&bias!==null;
+    const qualCount=qualBoxes.filter(b=>b.checked).length;
+    const qualTotal=qualBoxes.length;
+    const badge=$('#grVerdictBadge'),letter=$('#grGaugeLetter'),blockers=$('#grBlockers');
+
+    let pct,color,label,cls,pctLabel=null;
+
+    if(dqAny){
+      pct=100;color=cssVar('--bear');label='NO TRADE';cls='gr-no';pctLabel='stand down';
+      letter.textContent='✕';
+      blockers.classList.remove('gr-ok');
+      blockers.innerHTML='<div class="bt">Disqualified by</div><ul>'+
+        dqLabels.filter((_,i)=>dqHits[i]).map(t=>`<li>${t}</li>`).join('')+'</ul>';
+    } else if(!reqAll){
+      pct=Math.round((reqState.filter(Boolean).length/reqBoxes.length)*40);
+      color=cssVar('--bear');label='NO TRADE';cls='gr-no';pctLabel='not yet';
+      letter.textContent='✕';
+      const missing=[];
+      if(bias===null)missing.push('Mark an HTF direction (bullish/bearish)');
+      reqLabels.forEach((t,i)=>{if(!reqState[i])missing.push(t)});
+      blockers.classList.remove('gr-ok');
+      blockers.innerHTML='<div class="bt">Still missing</div><ul>'+missing.map(t=>`<li>${t}</li>`).join('')+'</ul>';
+    } else {
+      pct=Math.round((qualCount/qualTotal)*100);
+      if(qualCount>=7){label='A+';cls='gr-aplus';color=cssVar('--bull');}
+      else if(qualCount>=5){label='A';cls='gr-a';color=cssVar('--lav');}
+      else if(qualCount>=3){label='B';cls='gr-b';color=cssVar('--amber');}
+      else {label='C';cls='gr-c';color=cssVar('--bear');}
+      letter.textContent=label;
+      if(qualCount===qualTotal){
+        blockers.classList.add('gr-ok');
+        blockers.innerHTML='All quality checks met &mdash; this is as clean as the method asks for. &hearts;';
+      } else {
+        blockers.classList.remove('gr-ok');
+        const nextTierAt = qualCount<3?3:qualCount<5?5:qualCount<7?7:qualTotal;
+        const need=nextTierAt-qualCount;
+        blockers.innerHTML=`<div class="bt">${need} more check${need===1?'':'s'} to level up</div>`;
+      }
+    }
+    badge.className='gr-verdict '+cls;
+    badge.textContent=label+(cls==='gr-no'?' ♡':'');
+    drawGauge(pct,color,pctLabel);
+  }
+
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.addEventListener('click', ()=>{
+      const show = t.dataset.view === 'grader';
+      $('#view-grader').hidden = !show;
+      if(show) requestAnimationFrame(grade);
+    });
+  });
+
+  let grrt;
+  addEventListener('resize', ()=>{ clearTimeout(grrt); grrt = setTimeout(()=>{ if(!$('#view-grader').hidden) grade(); }, 150); });
+
+  load();
+  grade();
 })();
 </script>
 </body>
