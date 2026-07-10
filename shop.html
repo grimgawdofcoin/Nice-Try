@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Shop &middot; Bone Jungle</title>
+<meta name="description" content="Shop Bone Jungle — feral streetwear drops. Tees, hoodies, headwear, and more." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div class="vines"></div>
+<div class="noise"></div>
+
+<header>
+  <div class="bar">
+    <a href="index.html" aria-label="Bone Jungle home">
+      <img class="logo-mark" src="assets/bone-jungle-logo-transparent.png" alt="Bone Jungle">
+    </a>
+    <div class="spacer"></div>
+    <nav class="links" id="navLinks">
+      <a href="index.html">Home</a>
+      <a href="shop.html" aria-current="page">Shop</a>
+      <a href="index.html#about">About</a>
+      <a href="index.html#contact">Contact</a>
+    </nav>
+    <button class="cart-btn" id="cartBtn">
+      Bag <span class="cart-count" data-cart-count hidden>0</span>
+    </button>
+    <button class="menu-toggle" id="menuToggle" aria-label="Menu">&#9776;</button>
+  </div>
+</header>
+
+<main>
+  <section class="hero" style="padding-top:46px;padding-bottom:10px;">
+    <div class="eyebrow">DROP NO. 003</div>
+    <h1 style="font-size:clamp(28px,5vw,46px);">The <em>Full</em> Pack</h1>
+    <p>Everything currently roaming. Capped quantities — once a size is gone, it's gone for this cycle.</p>
+  </section>
+
+  <section class="block" style="margin-top:20px;">
+    <div class="filters" id="filters">
+      <button class="filter" aria-pressed="true" data-filter="all">All</button>
+      <button class="filter" data-filter="tees">Tees</button>
+      <button class="filter" data-filter="hoodies">Hoodies</button>
+      <button class="filter" data-filter="headwear">Headwear</button>
+      <button class="filter" data-filter="bottoms">Bottoms</button>
+      <button class="filter" data-filter="outerwear">Outerwear</button>
+      <button class="filter" data-filter="accessories">Accessories</button>
+    </div>
+
+    <div class="product-grid" id="productGrid">
+      <!-- cards injected by JS -->
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="foot-wrap">
+    <div>
+      <img class="logo-mark" src="assets/bone-jungle-logo-transparent.png" alt="Bone Jungle" style="margin-bottom:14px;">
+      <p>Feral streetwear for the concrete wild. Limited drops, no restocks, no apologies.</p>
+    </div>
+    <div>
+      <h4>SHOP</h4>
+      <ul>
+        <li><a href="shop.html">All Products</a></li>
+        <li><a href="shop.html">Tees</a></li>
+        <li><a href="shop.html">Hoodies</a></li>
+        <li><a href="shop.html">Headwear</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>FOLLOW THE TRACKS</h4>
+      <ul>
+        <li><a href="#">Instagram</a></li>
+        <li><a href="#">TikTok</a></li>
+        <li><a href="#">Contact</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">&copy; 2026 BONE JUNGLE &middot; ALL RIGHTS RESERVED</div>
+</footer>
+
+<div class="overlay" id="cartOverlay"></div>
+<aside class="drawer" id="cartDrawer">
+  <div class="drawer-head">
+    <h3>Your Bag</h3>
+    <button id="cartClose" aria-label="Close cart">&times;</button>
+  </div>
+  <div class="drawer-items" id="drawerItems"></div>
+  <div class="drawer-foot">
+    <div class="row">Subtotal <b id="drawerTotal">$0.00</b></div>
+    <button class="btn primary" style="width:100%;justify-content:center;" onclick="alert('Demo store — checkout not connected yet.')">Checkout</button>
+  </div>
+</aside>
+
+<script src="js/cart.js"></script>
+<script>
+const PRODUCTS = [
+  { id:"jungle-bone-tee",   name:"Jungle Bone Tee",       cat:"tees",        price:38,  glyph:"&#129460;" },
+  { id:"blackout-hoodie",   name:"Blackout Hoodie",       cat:"hoodies",     price:82,  glyph:"&#128128;", badge:"LOW STOCK" },
+  { id:"feral-snapback",    name:"Feral Snapback",        cat:"headwear",    price:34,  glyph:"&#128006;" },
+  { id:"apex-crewneck",     name:"Apex Crewneck",         cat:"hoodies",     price:68,  glyph:"&#128058;" },
+  { id:"venom-tee",         name:"Venom Tee",             cat:"tees",        price:38,  glyph:"&#128013;" },
+  { id:"nightstalker-beanie", name:"Nightstalker Beanie", cat:"headwear",    price:28,  glyph:"&#129415;" },
+  { id:"bone-pile-shorts",  name:"Bone Pile Shorts",      cat:"bottoms",     price:54,  glyph:"&#129460;" },
+  { id:"sting-tee",         name:"Sting Tee",             cat:"tees",        price:38,  glyph:"&#129410;" },
+  { id:"undergrowth-jacket",name:"Undergrowth Jacket",    cat:"outerwear",   price:128, glyph:"&#127807;", badge:"NEW" },
+  { id:"pack-tag-chain",    name:"Pack Tag Chain",        cat:"accessories", price:22,  glyph:"&#9939;" },
+  { id:"feral-tote",        name:"Feral Tote",            cat:"accessories", price:24,  glyph:"&#127890;" },
+  { id:"blood-moon-hoodie", name:"Blood Moon Hoodie",     cat:"hoodies",     price:86,  glyph:"&#127761;" },
+];
+
+function renderGrid(filter){
+  const grid = document.getElementById("productGrid");
+  const list = filter === "all" ? PRODUCTS : PRODUCTS.filter(p => p.cat === filter);
+  grid.innerHTML = list.map(p => `
+    <div class="pcard">
+      <div class="thumb">
+        ${p.badge ? `<div class="badge">${p.badge}</div>` : ""}
+        <div class="glyph">${p.glyph}</div>
+      </div>
+      <div class="info">
+        <div class="cat">${p.cat}</div>
+        <h3>${p.name}</h3>
+        <div class="price">
+          <b>$${p.price}</b>
+          <button class="add" data-id="${p.id}">Add</button>
+        </div>
+      </div>
+    </div>
+  `).join("");
+
+  grid.querySelectorAll(".add").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const product = PRODUCTS.find(p => p.id === btn.dataset.id);
+      addToCart(product);
+      btn.textContent = "Added";
+      btn.classList.add("added");
+      setTimeout(() => { btn.textContent = "Add"; btn.classList.remove("added"); }, 1100);
+    });
+  });
+}
+
+document.getElementById("filters").addEventListener("click", (e) => {
+  const btn = e.target.closest(".filter");
+  if(!btn) return;
+  document.querySelectorAll(".filter").forEach(f => f.setAttribute("aria-pressed","false"));
+  btn.setAttribute("aria-pressed","true");
+  renderGrid(btn.dataset.filter);
+});
+
+renderGrid("all");
+</script>
+</body>
+</html>
