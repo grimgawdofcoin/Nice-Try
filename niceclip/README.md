@@ -12,6 +12,12 @@ watermark.
 
 ## What it does
 
+- **Dead-air detection** — if you left the recorder running (a 24-hour
+  capture with 2 hours of actual talking is a normal case), NiceClip finds
+  the silent stretches from the audio track automatically. Only the active
+  parts get transcribed and considered for clips — so 24 hours of tape
+  doesn't mean 24 hours of Whisper. Turn on *Cut dead air* to also get a
+  single clean export with the silence spliced out.
 - **Highlight detection** — transcribes speech locally (faster-whisper),
   scores every possible clip window using hook phrases, questions, humor,
   audio-energy spikes, and (optionally) scene-cut density.

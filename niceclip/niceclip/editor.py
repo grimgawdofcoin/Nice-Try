@@ -212,3 +212,66 @@ def render_clip(
             except OSError:
                 pass
     return warnings
+
+
+def _cap_region_count(
+    regions: list[tuple[float, float]], max_segments: int
+) -> list[tuple[float, float]]:
+    """Merge the smallest gaps first until the region count is within
+    max_segments — keeps the ffmpeg filtergraph a sane size for recordings
+    with hundreds of short activity blips."""
+    regions = list(regions)
+    while len(regions) > max_segments and len(regions) > 1:
+        gaps = [(regions[i + 1][0] - regions[i][1], i) for i in range(len(regions) - 1)]
+        gaps.sort(key=lambda g: g[0])
+        _, i = gaps[0]
+        regions[i] = (regions[i][0], regions[i + 1][1])
+        del regions[i + 1]
+    return regions
+
+
+def render_active_only(
+    src: str | Path,
+    regions: list[tuple[float, float]],
+    out_path: str | Path,
+    on_progress: Optional[ProgressFn] = None,
+    cancel_event: Optional[threading.Event] = None,
+    max_segments: int = 300,
+) -> float:
+    """Re-encode only the detected-active regions into one continuous video —
+    the fix for 'I forgot to stop recording'. Uses a trim+concat filtergraph
+    (not stream-copy) so cuts land exactly at the detected boundaries rather
+    than snapping to the nearest keyframe. Returns the exported duration."""
+    if not regions:
+        raise RuntimeError("No active regions to export")
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    regions = _cap_region_count(regions, max_segments)
+    n = len(regions)
+
+    vparts = [f"[0:v]trim=start={s:.3f}:end={e:.3f},setpts=PTS-STARTPTS[v{i}]"
+             for i, (s, e) in enumerate(regions)]
+    aparts = [f"[0:a]atrim=start={s:.3f}:end={e:.3f},asetpts=PTS-STARTPTS[a{i}]"
+             for i, (s, e) in enumerate(regions)]
+    concat_in = "".join(f"[v{i}][a{i}]" for i in range(n))
+    # loudnorm has to live inside the complex graph — ffmpeg rejects mixing a
+    # simple -af with a stream that's fed from -filter_complex.
+    filter_complex = (
+        ";".join(vparts + aparts)
+        + f";{concat_in}concat=n={n}:v=1:a=1[outv][cataudio]"
+        + ";[cataudio]loudnorm=I=-14:TP=-1.5:LRA=11[outa]"
+    )
+    total_duration = sum(e - s for s, e in regions)
+
+    args = [
+        "-i", str(src),
+        "-filter_complex", filter_complex,
+        "-map", "[outv]", "-map", "[outa]",
+        "-c:v", "libx264", "-preset", "veryfast", "-crf", "20", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "192k", "-ar", "48000",
+        "-movflags", "+faststart",
+        str(out_path),
+    ]
+    ff.run_ffmpeg(args, total_duration=total_duration,
+                  on_progress=on_progress, cancel_event=cancel_event)
+    return total_duration

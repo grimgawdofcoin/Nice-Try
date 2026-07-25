@@ -146,7 +146,9 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin-top:40px}
       <label><input type="checkbox" id="captions" checked> Burned-in captions</label>
       <label><input type="checkbox" id="aiRank" checked> AI clip selection (Claude)</label>
       <label><input type="checkbox" id="scenes"> Scene detection (slower)</label>
+      <label><input type="checkbox" id="cutDeadAir"> Cut dead air (export full video with silence removed)</label>
     </div>
+    <div class="sub" style="margin-top:10px">Left the recorder running? NiceClip detects the silent stretches automatically — only the active parts are transcribed and scored either way, and this option also gives you a clean single-file copy with the dead air removed.</div>
   </div>
 
   <div class="actions"><button class="primary" id="goBtn" disabled>✨ Create clips</button></div>
@@ -265,6 +267,7 @@ $("goBtn").onclick = async () => {
       whisper_model: $("whisper").value,
       ai_ranking: $("aiRank").checked,
       scene_detection: $("scenes").checked,
+      cut_dead_air: $("cutDeadAir").checked,
     }
   };
   const res = await fetch("/api/jobs", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
@@ -290,6 +293,17 @@ function renderJob(j){
   if(j.warnings && j.warnings.length)
     html += `<div class="warnings">⚠ ${j.warnings.map(esc).join("<br>⚠ ")}</div>`;
   if(j.status==="error") html += `<div class="error-msg">${esc(j.error)}</div>`;
+  if(j.exports && j.exports.length){
+    html += j.exports.map(e => `
+      <div class="clip" style="display:flex;align-items:center;gap:12px;padding:12px;margin-top:12px">
+        <div style="font-size:22px">🧹</div>
+        <div style="flex:1">
+          <div class="t">${esc(e.label || e.filename)}</div>
+          <div class="score">${Math.round(e.duration)}s</div>
+        </div>
+        <a href="${e.url}" download>⬇ Download</a>
+      </div>`).join("");
+  }
   if(j.clips && j.clips.length){
     html += `<div class="clips">` + j.clips.map(c => `
       <div class="clip">
@@ -311,7 +325,7 @@ let lastState = "";
 async function refreshJobs(){
   try{
     const jobs = await (await fetch("/api/jobs")).json();
-    const state = JSON.stringify(jobs.map(j=>[j.id,j.status,j.progress,j.stage,j.clips.length,j.warnings.length]));
+    const state = JSON.stringify(jobs.map(j=>[j.id,j.status,j.progress,j.stage,j.clips.length,(j.exports||[]).length,j.warnings.length]));
     if(state === lastState) return;
     lastState = state;
     jobsEl.innerHTML = "";

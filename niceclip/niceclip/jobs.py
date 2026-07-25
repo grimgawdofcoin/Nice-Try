@@ -23,6 +23,7 @@ class Job:
     created_at: float = field(default_factory=time.time)
     finished_at: Optional[float] = None
     clips: list[dict] = field(default_factory=list)
+    exports: list[dict] = field(default_factory=list)  # e.g. dead-air-trimmed full video
     warnings: list[str] = field(default_factory=list)
     error: Optional[str] = None
     cancel_event: threading.Event = field(default_factory=threading.Event, repr=False)
@@ -52,6 +53,7 @@ class Job:
                 "created_at": self.created_at,
                 "finished_at": self.finished_at,
                 "clips": list(self.clips),
+                "exports": list(self.exports),
                 "warnings": list(self.warnings),
                 "error": self.error,
             }
