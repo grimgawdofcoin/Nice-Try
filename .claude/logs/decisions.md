@@ -16,3 +16,8 @@ Append-only. See `.claude/CLAUDE.md` for the format and rules.
 **Plan:** Record the P4 verifier verdict on the NiceClip build and fix the failed Windows CI smoke test (frozen exe crashed: PyInstaller entry was niceclip/__main__.py, whose relative imports fail without package context).
 **Phases used:** P1 P4
 **Outcome:** P4 verifier returned PASS (no blockers; SDK usage verified against real anthropic/faster-whisper packages). Fixed CI by adding run.py launcher as the PyInstaller entry, made the CI smoke test capture app output and retry up to 2 min, and aligned pyproject deps with requirements.txt.
+
+## 2026-07-25 06:40 — NiceClip: remove the 15 GB size limit
+**Plan:** User correction: no file-size limit — must handle e.g. a 63 GB, 24-hour stream locally. Remove server/UI hard caps, add a free-disk-space guard on upload instead, bound the O(n^2) candidate dedupe for very long transcripts, update docs/UI copy.
+**Phases used:** P1 P4
+**Outcome:** Removed every size cap (server, job creation, UI, docs). Uploads now guarded by free disk space: upfront Content-Length check plus a re-check every 512 MB while streaming, returning HTTP 507 with a pointer to the zero-copy Browse path. Bounded candidate dedupe to O(n*40) so day-long transcripts score in milliseconds. P4 verifier initially FAILed on a stale docstring; fixed it plus a Content-Length parse guard, re-verified PASS.

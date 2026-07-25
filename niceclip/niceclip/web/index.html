@@ -97,10 +97,10 @@ footer{color:var(--muted);font-size:12px;text-align:center;margin-top:40px}
   </header>
 
   <div class="card">
-    <h2>1 · Pick your video (up to 15 GB)</h2>
+    <h2>1 · Pick your video (any size — a 24-hour stream is fine)</h2>
     <div class="drop" id="drop">
       <div class="big">Drop a video here or click to upload</div>
-      <div class="sub">MP4, MOV, MKV, AVI, WEBM… — big files stream straight to disk</div>
+      <div class="sub">MP4, MOV, MKV, AVI, WEBM… — uploads stream straight to disk. For huge files, Browse below is faster (no copy).</div>
     </div>
     <div class="upbar" id="upbar"><i id="upfill"></i></div>
     <div class="or">or use a file already on this computer (no copying)</div>
@@ -195,7 +195,6 @@ fileInput.onchange = () => fileInput.files[0] && upload(fileInput.files[0]);
 drop.addEventListener("drop", e => {const f = e.dataTransfer.files[0]; if(f) upload(f);});
 
 function upload(file){
-  if(file.size > 16*1024*1024*1024){alert("File is over the 15 GB limit."); return;}
   const bar = $("upbar"), fill = $("upfill");
   bar.style.display = "block"; fill.style.width = "0%";
   $("srcNote").textContent = "Uploading " + file.name + " (" + fmtBytes(file.size) + ")…";

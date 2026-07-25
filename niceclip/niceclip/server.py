@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import re
+import shutil
 import string
 import sys
 from pathlib import Path
@@ -19,7 +20,9 @@ from . import __version__, ffmpeg_utils as ff, llm
 from .jobs import JobManager
 from .pipeline import DEFAULT_SETTINGS, PipelineRunner
 
-MAX_UPLOAD_BYTES = 16 * 1024 ** 3  # a hair over the advertised 15 GB
+# No file-size limit — everything runs locally and ffmpeg streams the video.
+# The only real constraint is free disk space for uploads and work files.
+DISK_HEADROOM_BYTES = 2 * 1024 ** 3
 VIDEO_EXTS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v", ".ts", ".mts",
               ".wmv", ".flv", ".mpg", ".mpeg", ".3gp"}
 
@@ -79,13 +82,32 @@ def create_app() -> FastAPI:
         while dest.exists():
             dest = uploads / f"{stem}_{n}{suffix}"
             n += 1
+        free = shutil.disk_usage(uploads).free
+        try:
+            declared = int(request.headers.get("content-length") or 0)
+        except ValueError:
+            declared = 0
+        if declared and declared + DISK_HEADROOM_BYTES > free:
+            raise HTTPException(
+                507,
+                f"Not enough disk space: upload is {declared / 1e9:.1f} GB but "
+                f"only {free / 1e9:.1f} GB is free in {uploads}. Tip: use "
+                f"Browse to pick the file in place instead of uploading a copy.",
+            )
         size = 0
+        check_every = 512 * 1024 ** 2
+        next_check = check_every
         try:
             with open(dest, "wb") as f:
                 async for chunk in request.stream():
                     size += len(chunk)
-                    if size > MAX_UPLOAD_BYTES:
-                        raise HTTPException(413, "File exceeds the 15 GB limit")
+                    if size >= next_check:
+                        next_check += check_every
+                        if shutil.disk_usage(uploads).free < DISK_HEADROOM_BYTES:
+                            raise HTTPException(
+                                507, "Disk filled up during upload — freeing "
+                                "the partial file. Use Browse to pick the "
+                                "file in place instead.")
                     f.write(chunk)
         except Exception:
             dest.unlink(missing_ok=True)
@@ -103,8 +125,6 @@ def create_app() -> FastAPI:
         src = Path(source)
         if not src.is_file():
             raise HTTPException(400, f"File not found: {source}")
-        if src.stat().st_size > MAX_UPLOAD_BYTES:
-            raise HTTPException(413, "File exceeds the 15 GB limit")
         job = manager.submit(str(src), payload.get("settings") or {})
         return job.snapshot()
 

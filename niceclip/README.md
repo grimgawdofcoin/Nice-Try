@@ -1,9 +1,10 @@
 # 🎬 NiceClip — AI video clipper for social media
 
-Feed it a long video — a stream VOD, podcast, webinar, vlog, anything up to
-**15 GB** — and NiceClip finds the moments worth posting and renders them as
-finished clips: **vertical 9:16**, **burned-in captions**, **loudness-normalized
-audio**, ranked by expected short-form performance.
+Feed it a long video — a stream VOD, podcast, webinar, vlog, **any length,
+any size** (a 63 GB, 24-hour stream is fine) — and NiceClip finds the moments
+worth posting and renders them as finished clips: **vertical 9:16**,
+**burned-in captions**, **loudness-normalized audio**, ranked by expected
+short-form performance.
 
 It's the same core loop as OpusClip/Klap-style tools, except it runs **entirely
 on your own computer**: no upload to someone's cloud, no subscription, no
@@ -22,9 +23,10 @@ watermark.
   square 1:1, or original aspect.
 - **Captions** — word-grouped, bold, burned-in subtitles generated from
   Whisper word timestamps.
-- **Big-file safe** — video is streamed through ffmpeg; a 15 GB file never
-  touches RAM. Point NiceClip at a file already on disk and nothing is copied
-  at all.
+- **No size limit** — video is streamed through ffmpeg, so even a multi-day,
+  60+ GB recording never touches RAM. Point NiceClip at a file already on
+  disk (Browse) and nothing is copied at all; uploads are only bounded by
+  your free disk space.
 - **Local web UI** — drag-drop or browse, watch progress per stage, preview
   every clip in the browser, download with one click.
 
@@ -86,7 +88,8 @@ the API — never the video or audio itself.
 3. **Create clips** — watch the stages: audio extraction → transcription →
    scoring → AI ranking → rendering. Transcription is the slow part; budget
    roughly ¼–½ of the video's runtime on a typical CPU with the default
-   *Balanced* model (pick *Fastest* for a quick pass).
+   *Balanced* model. For day-long streams pick *Fastest* (tiny) — a 24-hour
+   VOD can otherwise take most of a workday to transcribe on CPU.
 4. **Preview & download** — every clip appears with its title, score, and the
    reason it was picked. Files also land in `%USERPROFILE%\NiceClip\clips`.
 
@@ -97,7 +100,7 @@ the API — never the video or audio itself.
 | Auto highlight detection | ✅ local Whisper + heuristics + Claude | ✅ cloud |
 | Virality-style scoring + reasons | ✅ | ✅ |
 | Vertical reframe + captions | ✅ blur-pad / crop, burned-in captions | ✅ incl. face tracking |
-| File size limit | 15 GB, local — no upload wait | typically 2–10 GB cloud upload |
+| File size limit | none — local, no upload wait | typically 2–10 GB cloud upload |
 | Privacy | video never leaves your machine | uploaded to their cloud |
 | Price | free, bring-your-own Claude key (optional) | subscription |
 | Speaker face tracking, auto-post/scheduling, B-roll | ❌ not yet (roadmap) | ✅ |

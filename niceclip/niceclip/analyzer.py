@@ -103,6 +103,8 @@ def extract_audio(
     on_progress: Optional[ProgressFn] = None,
     cancel_event: Optional[threading.Event] = None,
 ) -> None:
+    # 16 kHz mono s16 ≈ 115 MB/hour, so even a 24 h stream is a ~2.8 GB proxy
+    # (the 4 GB WAV format ceiling is reached around 37 h of footage).
     ff.run_ffmpeg(
         ["-i", str(src), "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le",
          "-f", "wav", str(wav_path)],
@@ -220,7 +222,7 @@ def build_candidates(
         cands = _candidates_from_energy(analysis, min_len, max_len)
     _score_candidates(analysis, cands)
     cands.sort(key=lambda c: c.score, reverse=True)
-    return _dedupe(cands)[:max_candidates]
+    return _dedupe(cands, max_keep=max_candidates)
 
 
 def _candidates_from_transcript(
@@ -313,9 +315,11 @@ def _score_candidates(analysis: Analysis, cands: list[Candidate]) -> None:
         c.reason = ", ".join(reasons) if reasons else "steady segment"
 
 
-def _dedupe(cands: list[Candidate], max_overlap: float = 0.5) -> list[Candidate]:
+def _dedupe(cands: list[Candidate], max_keep: int = 40,
+            max_overlap: float = 0.5) -> list[Candidate]:
     """Greedy non-max suppression by overlap fraction (candidates pre-sorted
-    by score)."""
+    by score). Stops at max_keep so a day-long transcript (tens of thousands
+    of windows) stays O(n * max_keep) instead of quadratic."""
     kept: list[Candidate] = []
     for c in cands:
         ok = True
@@ -326,6 +330,8 @@ def _dedupe(cands: list[Candidate], max_overlap: float = 0.5) -> list[Candidate]
                 break
         if ok:
             kept.append(c)
+            if len(kept) >= max_keep:
+                break
     return kept
 
 
