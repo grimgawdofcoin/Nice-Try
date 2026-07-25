@@ -37,6 +37,17 @@ jobs:
           New-Item -ItemType Directory -Force 'tools/ffmpeg' | Out-Null
           Copy-Item $exe.FullName 'tools/ffmpeg/ffmpeg.exe'
 
+      # So the shipped app never needs to reach huggingface.co at runtime —
+      # a network-blocked user hit exactly that failure in production.
+      - name: Cache Whisper models
+        uses: actions/cache@v4
+        with:
+          path: niceclip/tools/whisper_models
+          key: whisper-models-${{ hashFiles('niceclip/requirements.txt', 'niceclip/scripts/download_whisper_models.py') }}
+
+      - name: Download Whisper speech models (offline use)
+        run: python scripts\download_whisper_models.py
+
       - name: Build with PyInstaller
         run: >
           pyinstaller --noconfirm --clean --onedir --name NiceClip
@@ -51,11 +62,12 @@ jobs:
           --hidden-import uvicorn.lifespan.on
           run.py
 
-      - name: Bundle ffmpeg
+      - name: Bundle ffmpeg and Whisper models
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force 'dist/NiceClip/ffmpeg' | Out-Null
           Copy-Item 'tools/ffmpeg/ffmpeg.exe' 'dist/NiceClip/ffmpeg/ffmpeg.exe'
+          Copy-Item -Recurse 'tools/whisper_models' 'dist/NiceClip/whisper_models'
 
       - name: Smoke test the frozen app
         shell: pwsh

@@ -138,16 +138,14 @@ class PipelineRunner:
                 job.set_stage(
                     f"Transcribing speech (Whisper {s['whisper_model']}) — "
                     "this is the slow part", 13)
-                segments = analyzer.transcribe(
-                    transcribe_target, transcribe_duration, s["whisper_model"],
-                    on_progress=job.stage_progress(13, 42),
-                    cancel_event=job.cancel_event,
-                )
-                if segments is None:
-                    job.warnings.append(
-                        "faster-whisper is not installed — clips were chosen "
-                        "by audio energy alone, and captions are unavailable."
+                try:
+                    segments = analyzer.transcribe(
+                        transcribe_target, transcribe_duration, s["whisper_model"],
+                        on_progress=job.stage_progress(13, 42),
+                        cancel_event=job.cancel_event,
                     )
+                except analyzer.WhisperUnavailable as e:
+                    job.warnings.append(str(e))
                 else:
                     if trimmed_for_transcription:
                         segments = analyzer.remap_segments(segments, active_regions)

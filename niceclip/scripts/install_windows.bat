@@ -19,17 +19,17 @@ if errorlevel 1 (
     exit /b 1
 )
 
-echo [1/4] Creating virtual environment...
+echo [1/5] Creating virtual environment...
 if not exist .venv (
     python -m venv .venv || (echo [!] venv creation failed & pause & exit /b 1)
 )
 
-echo [2/4] Installing Python dependencies (this can take a few minutes)...
+echo [2/5] Installing Python dependencies (this can take a few minutes)...
 call .venv\Scripts\activate.bat
 python -m pip install --upgrade pip >nul
 pip install -r requirements.txt || (echo [!] pip install failed & pause & exit /b 1)
 
-echo [3/4] Downloading ffmpeg (full build with caption support)...
+echo [3/5] Downloading ffmpeg (full build with caption support)...
 if not exist tools\ffmpeg\ffmpeg.exe (
     mkdir tools 2>nul
     powershell -NoProfile -ExecutionPolicy Bypass -Command ^
@@ -46,7 +46,16 @@ if not exist tools\ffmpeg\ffmpeg.exe (
     )
 )
 
-echo [4/4] Creating launcher...
+echo [4/5] Downloading speech-recognition models for offline use (one-time,
+echo        several GB — safe to Ctrl+C and re-run later if you're in a hurry;
+echo        transcription just won't work until this finishes)...
+python scripts\download_whisper_models.py
+if errorlevel 1 (
+    echo [!] Whisper model download failed or was skipped. Transcription will
+    echo     try to download models on first use instead ^(needs internet^).
+)
+
+echo [5/5] Creating launcher...
 > NiceClip.bat (
     echo @echo off
     echo cd /d "%%~dp0"

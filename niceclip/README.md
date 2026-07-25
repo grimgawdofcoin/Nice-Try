@@ -47,8 +47,9 @@ watermark.
 3. Double-click **`NiceClip.exe`**. Your browser opens the app at
    `http://127.0.0.1:8765`.
 
-No Python, no ffmpeg, nothing else to install — everything is bundled,
-including a full ffmpeg build with caption support.
+No Python, no ffmpeg, no internet connection required — everything is
+bundled, including a full ffmpeg build with caption support and the Whisper
+speech-recognition models (so transcription works fully offline too).
 
 ### Option B — install from source
 
@@ -121,8 +122,15 @@ the API — never the video or audio itself.
   also works. Clips still render, just without captions.
 - **"no transcription" badge** — `pip install faster-whisper` into the same
   environment. Without it, clips are chosen by audio energy alone.
-- **First transcription is slow to start** — the Whisper model downloads once
-  (~75–500 MB depending on quality) and is cached afterwards.
+- **The downloadable Windows package ships its speech-recognition models
+  offline** — transcription never needs internet access there. If you
+  installed from source instead, the first use of each quality level (tiny/
+  base/small/medium) downloads its model from Hugging Face once; run
+  `scripts\download_whisper_models.py` ahead of time to fetch all of them, or
+  just re-run `scripts\install_windows.bat`. If that download can't reach
+  huggingface.co (blocked network, offline machine), NiceClip no longer fails
+  the job — it warns and falls back to audio-energy-only clip selection
+  automatically.
 - Outputs, uploads and logs live in `%USERPROFILE%\NiceClip` (override with
   the `NICECLIP_DATA` environment variable).
 

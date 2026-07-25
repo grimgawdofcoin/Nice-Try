@@ -14,7 +14,9 @@ speech), scored heuristically; `llm.rank_with_claude` can then re-rank them.
 
 from __future__ import annotations
 
+import os
 import re
+import sys
 import threading
 import wave
 from dataclasses import dataclass, field
@@ -26,6 +28,12 @@ import numpy as np
 from . import ffmpeg_utils as ff
 
 ProgressFn = Callable[[float], None]
+
+
+class WhisperUnavailable(RuntimeError):
+    """Transcription can't run this time (not installed, or the model isn't
+    bundled and couldn't be downloaded). Callers should degrade to
+    audio-energy-only analysis rather than fail the whole job."""
 
 ENERGY_WINDOW_S = 0.5
 
@@ -263,20 +271,62 @@ def detect_scenes(
     return ff.parse_showinfo_times(stderr)
 
 
+def _find_bundled_whisper_model(model_size: str) -> Optional[str]:
+    """Look for a pre-downloaded, offline-ready model directory so
+    transcription never has to reach huggingface.co. Mirrors
+    ffmpeg_utils.find_ffmpeg's search order (env var -> frozen-app layout ->
+    source-tree tools/ dir)."""
+    candidates: list[Path] = []
+    env = os.environ.get("NICECLIP_WHISPER_MODELS")
+    if env:
+        candidates.append(Path(env) / model_size)
+    if getattr(sys, "frozen", False):
+        base = Path(sys.executable).parent
+        candidates += [base / "whisper_models" / model_size,
+                       base / "_internal" / "whisper_models" / model_size]
+    here = Path(__file__).resolve()
+    for parent in [here.parent.parent, here.parent.parent.parent]:
+        candidates.append(parent / "tools" / "whisper_models" / model_size)
+    for c in candidates:
+        if c.is_dir() and (c / "model.bin").is_file():
+            return str(c)
+    return None
+
+
 def transcribe(
     wav_path: str | Path,
     duration: float,
     model_size: str = "small",
     on_progress: Optional[ProgressFn] = None,
     cancel_event: Optional[threading.Event] = None,
-) -> Optional[list[Segment]]:
-    """Transcribe with faster-whisper. Returns None when unavailable so the
-    pipeline can degrade to audio-energy-only analysis."""
+) -> list[Segment]:
+    """Transcribe with faster-whisper.
+
+    Raises WhisperUnavailable (never lets a raw import/network/model-load
+    error propagate) when transcription can't run this time, so the caller
+    can degrade to audio-energy-only analysis instead of failing the job.
+    """
     try:
         from faster_whisper import WhisperModel  # type: ignore
-    except ImportError:
-        return None
-    model = WhisperModel(model_size, device="cpu", compute_type="int8")
+    except ImportError as e:
+        raise WhisperUnavailable(
+            "faster-whisper is not installed — clips were chosen by audio "
+            "energy alone, and captions are unavailable."
+        ) from e
+
+    model_path = _find_bundled_whisper_model(model_size) or model_size
+    try:
+        model = WhisperModel(model_path, device="cpu", compute_type="int8")
+    except Exception as e:
+        raise WhisperUnavailable(
+            f"Couldn't load the Whisper '{model_size}' speech model ("
+            f"{type(e).__name__}: {e}). The downloadable Windows package "
+            "ships models for fully offline use; if you're running from "
+            "source, this model needs a one-time internet download. Clips "
+            "were chosen by audio energy alone, and captions are "
+            "unavailable."
+        ) from e
+
     seg_iter, _info = model.transcribe(
         str(wav_path), vad_filter=True, word_timestamps=True, beam_size=1,
     )
