@@ -15,10 +15,10 @@ dependencies = [
     "numpy>=1.24",
     "faster-whisper>=1.0",
     "imageio-ffmpeg>=0.4.9",
+    "anthropic>=0.40",
 ]
 
 [project.optional-dependencies]
-ai = ["anthropic>=0.40"]
 build = ["pyinstaller>=6.6"]
 
 [project.scripts]

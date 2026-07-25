@@ -49,7 +49,7 @@ jobs:
           --hidden-import uvicorn.protocols.http.auto
           --hidden-import uvicorn.protocols.websockets.auto
           --hidden-import uvicorn.lifespan.on
-          niceclip\__main__.py
+          run.py
 
       - name: Bundle ffmpeg
         shell: pwsh
@@ -60,15 +60,21 @@ jobs:
       - name: Smoke test the frozen app
         shell: pwsh
         run: |
-          $p = Start-Process -FilePath 'dist/NiceClip/NiceClip.exe' -ArgumentList '--no-browser','--port','8791' -PassThru
-          Start-Sleep -Seconds 25
-          try {
-            $health = Invoke-RestMethod 'http://127.0.0.1:8791/api/health'
-            $health | ConvertTo-Json
-            if (-not $health.ffmpeg) { throw 'ffmpeg not detected in frozen app' }
-          } finally {
-            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          $p = Start-Process -FilePath 'dist/NiceClip/NiceClip.exe' `
+            -ArgumentList '--no-browser','--port','8791' -PassThru `
+            -RedirectStandardOutput app-out.log -RedirectStandardError app-err.log
+          $health = $null
+          foreach ($i in 1..24) {
+            Start-Sleep -Seconds 5
+            if ($p.HasExited) { Write-Host "App exited early (code $($p.ExitCode))"; break }
+            try { $health = Invoke-RestMethod 'http://127.0.0.1:8791/api/health'; break } catch {}
           }
+          Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          Write-Host '--- app stdout ---'; Get-Content app-out.log -ErrorAction SilentlyContinue
+          Write-Host '--- app stderr ---'; Get-Content app-err.log -ErrorAction SilentlyContinue
+          if (-not $health) { throw 'frozen app never became healthy' }
+          $health | ConvertTo-Json
+          if (-not $health.ffmpeg) { throw 'ffmpeg not detected in frozen app' }
 
       - name: Zip package
         shell: pwsh

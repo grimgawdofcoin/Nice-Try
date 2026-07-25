@@ -21,7 +21,7 @@ pyinstaller --noconfirm --clean --onedir --name NiceClip ^
   --hidden-import uvicorn.protocols.http.auto ^
   --hidden-import uvicorn.protocols.websockets.auto ^
   --hidden-import uvicorn.lifespan.on ^
-  niceclip\__main__.py || (echo [!] PyInstaller failed & pause & exit /b 1)
+  run.py || (echo [!] PyInstaller failed & pause & exit /b 1)
 
 if exist tools\ffmpeg\ffmpeg.exe (
     mkdir dist\NiceClip\ffmpeg 2>nul
