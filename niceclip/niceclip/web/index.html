@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NiceClip — AI Video Clipper</title>
+<style>
+:root{
+  --bg:#0d1017;--panel:#161b26;--panel2:#1d2333;--line:#2a3247;
+  --text:#e8ecf5;--muted:#8b94a8;--accent:#7c5cff;--accent2:#00d4a6;
+  --danger:#ff5c7a;--warn:#ffb454;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;min-height:100vh}
+.wrap{max-width:1060px;margin:0 auto;padding:28px 20px 80px}
+header{display:flex;align-items:center;gap:14px;margin-bottom:26px;flex-wrap:wrap}
+.logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:22px}
+h1{font-size:22px;font-weight:700}
+h1 span{color:var(--accent2)}
+.tag{font-size:12px;color:var(--muted)}
+.badges{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.badge{font-size:11.5px;padding:4px 10px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+.badge.ok{border-color:#1f6f5b;color:var(--accent2)}
+.badge.bad{border-color:#7a3040;color:var(--danger)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:22px;margin-bottom:18px}
+.card h2{font-size:15px;font-weight:600;margin-bottom:14px;color:#c7cfdf}
+.drop{border:2px dashed var(--line);border-radius:12px;padding:34px 20px;text-align:center;cursor:pointer;transition:.15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:rgba(124,92,255,.06)}
+.drop .big{font-size:16px;font-weight:600}
+.drop .sub{color:var(--muted);font-size:13px;margin-top:6px}
+.or{display:flex;align-items:center;gap:12px;color:var(--muted);font-size:12px;margin:16px 0}
+.or:before,.or:after{content:"";flex:1;height:1px;background:var(--line)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+input[type=text],select{background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 12px;font-size:14px;outline:none}
+input[type=text]:focus,select:focus{border-color:var(--accent)}
+.grow{flex:1;min-width:220px}
+button{background:var(--panel2);border:1px solid var(--line);border-radius:9px;color:var(--text);padding:10px 16px;font-size:14px;cursor:pointer;transition:.15s}
+button:hover{border-color:var(--accent)}
+button.primary{background:linear-gradient(135deg,var(--accent),#5a3fe0);border:none;font-weight:600;padding:12px 26px;font-size:15px}
+button.primary:hover{filter:brightness(1.12)}
+button.primary:disabled{opacity:.45;cursor:not-allowed;filter:none}
+button.danger{color:var(--danger)}
+.settings{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px}
+.field select,.field input{width:100%}
+.checks{display:flex;gap:22px;flex-wrap:wrap;margin-top:14px}
+.checks label{display:flex;align-items:center;gap:8px;font-size:13.5px;color:#c7cfdf;cursor:pointer}
+input[type=checkbox]{accent-color:var(--accent);width:16px;height:16px}
+.src-note{margin-top:10px;font-size:13px;color:var(--accent2);word-break:break-all;min-height:18px}
+.upbar{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:10px;display:none}
+.upbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .2s}
+.actions{display:flex;justify-content:flex-end;margin-top:6px}
+.job{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;margin-bottom:16px}
+.job-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.job-title{font-weight:600;font-size:14px;word-break:break-all}
+.status{font-size:11.5px;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.5px}
+.status.running{background:rgba(124,92,255,.15);color:#b3a1ff}
+.status.queued{background:rgba(139,148,168,.15);color:var(--muted)}
+.status.done{background:rgba(0,212,166,.15);color:var(--accent2)}
+.status.error{background:rgba(255,92,122,.15);color:var(--danger)}
+.status.cancelled{background:rgba(255,180,84,.15);color:var(--warn)}
+.job .stage{color:var(--muted);font-size:13px;margin-top:8px}
+.pbar{height:9px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-top:10px}
+.pbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));width:0%;transition:width .5s}
+.warnings{margin-top:10px;font-size:12.5px;color:var(--warn)}
+.error-msg{margin-top:10px;font-size:13px;color:var(--danger);white-space:pre-wrap}
+.clips{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px;margin-top:16px}
+.clip{background:var(--panel2);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.clip video{width:100%;aspect-ratio:9/16;background:#000;display:block;object-fit:contain}
+.clip .meta{padding:12px}
+.clip .t{font-weight:600;font-size:13.5px;margin-bottom:4px}
+.clip .score{font-size:12px;color:var(--accent2)}
+.clip .why{font-size:12px;color:var(--muted);margin:6px 0 10px}
+.clip a{display:inline-block;font-size:12.5px;color:var(--accent);text-decoration:none;border:1px solid var(--line);padding:6px 12px;border-radius:8px}
+.clip a:hover{border-color:var(--accent)}
+.modal-bg{position:fixed;inset:0;background:rgba(5,7,12,.7);display:none;align-items:center;justify-content:center;z-index:50}
+.modal{background:var(--panel);border:1px solid var(--line);border-radius:14px;width:min(620px,92vw);max-height:78vh;display:flex;flex-direction:column}
+.modal .mh{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+.modal .mh .path{font-size:12.5px;color:var(--muted);word-break:break-all;flex:1}
+.modal .list{overflow-y:auto;padding:8px}
+.fitem{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:13.5px}
+.fitem:hover{background:var(--panel2)}
+.fitem .sz{margin-left:auto;color:var(--muted);font-size:12px}
+.empty{color:var(--muted);text-align:center;padding:30px 0;font-size:13.5px}
+footer{color:var(--muted);font-size:12px;text-align:center;margin-top:40px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">🎬</div>
+    <div>
+      <h1>Nice<span>Clip</span></h1>
+      <div class="tag">Long video in → viral-ready clips out. Runs 100% on your machine.</div>
+    </div>
+    <div class="badges" id="badges"></div>
+  </header>
+
+  <div class="card">
+    <h2>1 · Pick your video (up to 15 GB)</h2>
+    <div class="drop" id="drop">
+      <div class="big">Drop a video here or click to upload</div>
+      <div class="sub">MP4, MOV, MKV, AVI, WEBM… — big files stream straight to disk</div>
+    </div>
+    <div class="upbar" id="upbar"><i id="upfill"></i></div>
+    <div class="or">or use a file already on this computer (no copying)</div>
+    <div class="row">
+      <input type="text" class="grow" id="pathInput" placeholder="C:\Videos\my-stream.mp4">
+      <button id="browseBtn">Browse…</button>
+    </div>
+    <div class="src-note" id="srcNote"></div>
+  </div>
+
+  <div class="card">
+    <h2>2 · Clip settings</h2>
+    <div class="settings">
+      <div class="field"><label>Number of clips</label>
+        <select id="clipCount"><option>3</option><option selected>5</option><option>8</option><option>10</option><option>15</option></select></div>
+      <div class="field"><label>Clip length (seconds)</label>
+        <select id="lenRange">
+          <option value="15,60" selected>15 – 60 (Shorts/TikTok)</option>
+          <option value="10,30">10 – 30 (fast hooks)</option>
+          <option value="30,90">30 – 90 (story clips)</option>
+          <option value="60,180">60 – 180 (long form)</option>
+        </select></div>
+      <div class="field"><label>Format</label>
+        <select id="aspect">
+          <option value="vertical" selected>Vertical 9:16 (TikTok/Reels/Shorts)</option>
+          <option value="square">Square 1:1</option>
+          <option value="original">Original aspect</option>
+        </select></div>
+      <div class="field"><label>Vertical framing</label>
+        <select id="vmode">
+          <option value="fit" selected>Fit + blurred background</option>
+          <option value="crop">Center crop (fill)</option>
+        </select></div>
+      <div class="field"><label>Transcription quality</label>
+        <select id="whisper">
+          <option value="tiny">Fastest (tiny)</option>
+          <option value="base">Fast (base)</option>
+          <option value="small" selected>Balanced (small)</option>
+          <option value="medium">Best (medium — slow)</option>
+        </select></div>
+    </div>
+    <div class="checks">
+      <label><input type="checkbox" id="captions" checked> Burned-in captions</label>
+      <label><input type="checkbox" id="aiRank" checked> AI clip selection (Claude)</label>
+      <label><input type="checkbox" id="scenes"> Scene detection (slower)</label>
+    </div>
+  </div>
+
+  <div class="actions"><button class="primary" id="goBtn" disabled>✨ Create clips</button></div>
+
+  <div id="jobs"></div>
+  <footer>NiceClip runs locally — your video never leaves this computer (except transcript snippets, if AI clip selection is enabled).</footer>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <div class="mh"><button id="upDir">↑ Up</button><div class="path" id="mPath"></div><button id="mClose">✕</button></div>
+    <div class="list" id="mList"></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+let source = null;
+
+function fmtBytes(b){if(b>1e9)return (b/1e9).toFixed(1)+" GB";if(b>1e6)return (b/1e6).toFixed(1)+" MB";return Math.round(b/1e3)+" KB";}
+function setSource(path, note){source = path; $("srcNote").textContent = note || ("Selected: " + path); $("goBtn").disabled = !path;}
+
+/* ---------- health badges ---------- */
+async function loadHealth(){
+  try{
+    const h = await (await fetch("/api/health")).json();
+    const mk = (ok, okTxt, badTxt) => `<span class="badge ${ok?"ok":"bad"}">${ok?okTxt:badTxt}</span>`;
+    $("badges").innerHTML =
+      mk(h.ffmpeg, "ffmpeg ready", "ffmpeg missing") +
+      mk(h.captions, "captions ready", "no captions") +
+      mk(h.whisper, "transcription ready", "no transcription") +
+      mk(h.ai_ranking, "AI ranking on", "AI ranking off");
+  }catch(e){/* server starting */}
+}
+loadHealth();
+
+/* ---------- upload ---------- */
+const drop = $("drop");
+const fileInput = document.createElement("input");
+fileInput.type = "file"; fileInput.accept = "video/*,.mkv,.ts,.mts";
+drop.onclick = () => fileInput.click();
+fileInput.onchange = () => fileInput.files[0] && upload(fileInput.files[0]);
+["dragover","dragenter"].forEach(ev => drop.addEventListener(ev, e => {e.preventDefault(); drop.classList.add("over");}));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => {e.preventDefault(); drop.classList.remove("over");}));
+drop.addEventListener("drop", e => {const f = e.dataTransfer.files[0]; if(f) upload(f);});
+
+function upload(file){
+  if(file.size > 16*1024*1024*1024){alert("File is over the 15 GB limit."); return;}
+  const bar = $("upbar"), fill = $("upfill");
+  bar.style.display = "block"; fill.style.width = "0%";
+  $("srcNote").textContent = "Uploading " + file.name + " (" + fmtBytes(file.size) + ")…";
+  $("goBtn").disabled = true;
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/upload?filename=" + encodeURIComponent(file.name));
+  xhr.upload.onprogress = e => {if(e.lengthComputable) fill.style.width = (100*e.loaded/e.total).toFixed(1)+"%";};
+  xhr.onload = () => {
+    bar.style.display = "none";
+    if(xhr.status === 200){
+      const r = JSON.parse(xhr.responseText);
+      setSource(r.path, "Uploaded: " + file.name + " (" + fmtBytes(r.bytes) + ")");
+    } else {
+      let msg = "Upload failed"; try{msg = JSON.parse(xhr.responseText).detail || msg;}catch(e){}
+      $("srcNote").textContent = ""; alert(msg);
+    }
+  };
+  xhr.onerror = () => {bar.style.display = "none"; alert("Upload failed — is the server still running?");};
+  xhr.send(file);
+}
+
+/* ---------- path input + browse ---------- */
+$("pathInput").addEventListener("change", () => {
+  const v = $("pathInput").value.trim();
+  if(v) setSource(v, "Using: " + v);
+});
+let curDir = "";
+$("browseBtn").onclick = () => {openBrowser("");};
+$("mClose").onclick = () => $("modalBg").style.display = "none";
+$("modalBg").onclick = e => {if(e.target === $("modalBg")) $("modalBg").style.display = "none";};
+$("upDir").onclick = () => {if(curDir !== null) openBrowser(curDirParent ?? "");};
+let curDirParent = null;
+async function openBrowser(path){
+  const res = await fetch("/api/browse?path=" + encodeURIComponent(path));
+  if(!res.ok){alert("Cannot open folder"); return;}
+  const data = await res.json();
+  curDir = data.path; curDirParent = data.parent;
+  $("mPath").textContent = data.path || "This PC";
+  const list = $("mList"); list.innerHTML = "";
+  if(!data.entries.length) list.innerHTML = '<div class="empty">No folders or videos here</div>';
+  for(const e of data.entries){
+    const div = document.createElement("div");
+    div.className = "fitem";
+    div.innerHTML = (e.dir ? "📁 " : "🎞️ ") + "<span></span>" +
+      (e.dir ? "" : `<span class="sz">${fmtBytes(e.size||0)}</span>`);
+    div.querySelector("span").textContent = e.name;
+    div.onclick = () => {
+      if(e.dir) openBrowser(e.path);
+      else {setSource(e.path, "Using: " + e.path); $("pathInput").value = e.path; $("modalBg").style.display = "none";}
+    };
+    list.appendChild(div);
+  }
+  $("modalBg").style.display = "flex";
+}
+
+/* ---------- job creation ---------- */
+$("goBtn").onclick = async () => {
+  if(!source) return;
+  const [minLen, maxLen] = $("lenRange").value.split(",").map(Number);
+  const payload = {
+    source,
+    settings: {
+      clip_count: Number($("clipCount").value),
+      min_len: minLen, max_len: maxLen,
+      aspect: $("aspect").value,
+      vertical_mode: $("vmode").value,
+      captions: $("captions").checked,
+      whisper_model: $("whisper").value,
+      ai_ranking: $("aiRank").checked,
+      scene_detection: $("scenes").checked,
+    }
+  };
+  const res = await fetch("/api/jobs", {method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload)});
+  if(!res.ok){let msg="Could not start job"; try{msg=(await res.json()).detail||msg;}catch(e){} alert(msg); return;}
+  refreshJobs();
+};
+
+/* ---------- job rendering ---------- */
+const jobsEl = $("jobs");
+function esc(s){const d=document.createElement("div"); d.textContent=s??""; return d.innerHTML;}
+function jobName(j){const p=j.source.split(/[\\/]/); return p[p.length-1];}
+function renderJob(j){
+  const active = j.status==="running"||j.status==="queued";
+  let html = `<div class="job-head">
+      <div class="job-title">${esc(jobName(j))}</div>
+      <span class="status ${j.status}">${j.status}</span>
+      ${active?`<button class="danger" onclick="cancelJob('${j.id}')">Cancel</button>`:""}
+    </div>`;
+  if(active){
+    html += `<div class="stage">${esc(j.stage)}</div>
+      <div class="pbar"><i style="width:${j.progress}%"></i></div>`;
+  }
+  if(j.warnings && j.warnings.length)
+    html += `<div class="warnings">⚠ ${j.warnings.map(esc).join("<br>⚠ ")}</div>`;
+  if(j.status==="error") html += `<div class="error-msg">${esc(j.error)}</div>`;
+  if(j.clips && j.clips.length){
+    html += `<div class="clips">` + j.clips.map(c => `
+      <div class="clip">
+        <video src="${c.url}" controls preload="metadata"></video>
+        <div class="meta">
+          <div class="t">${esc(c.title)}</div>
+          <div class="score">Score ${Math.round(c.score)} · ${Math.round(c.duration)}s</div>
+          <div class="why">${esc(c.reason)}</div>
+          <a href="${c.url}" download>⬇ Download</a>
+        </div>
+      </div>`).join("") + `</div>`;
+  }
+  return html;
+}
+async function cancelJob(id){await fetch(`/api/jobs/${id}/cancel`, {method:"POST"}); refreshJobs();}
+window.cancelJob = cancelJob;
+
+let lastState = "";
+async function refreshJobs(){
+  try{
+    const jobs = await (await fetch("/api/jobs")).json();
+    const state = JSON.stringify(jobs.map(j=>[j.id,j.status,j.progress,j.stage,j.clips.length,j.warnings.length]));
+    if(state === lastState) return;
+    lastState = state;
+    jobsEl.innerHTML = "";
+    for(const j of jobs){
+      const div = document.createElement("div");
+      div.className = "job"; div.innerHTML = renderJob(j);
+      jobsEl.appendChild(div);
+    }
+  }catch(e){/* server briefly unavailable */}
+}
+refreshJobs();
+setInterval(refreshJobs, 1500);
+</script>
+</body>
+</html>

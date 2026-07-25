@@ -1,0 +1,86 @@
+name: Build NiceClip for Windows
+
+on:
+  push:
+    branches: ["**"]
+    paths: ["niceclip/**", ".github/workflows/build-windows.yml"]
+    tags: ["v*"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: niceclip
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: niceclip/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Download full ffmpeg build (libass captions)
+        shell: pwsh
+        run: |
+          $ProgressPreference = 'SilentlyContinue'
+          Invoke-WebRequest -Uri 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip' -OutFile 'ffmpeg.zip'
+          Expand-Archive -Force 'ffmpeg.zip' 'ffmpeg_tmp'
+          $exe = Get-ChildItem 'ffmpeg_tmp' -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+          New-Item -ItemType Directory -Force 'tools/ffmpeg' | Out-Null
+          Copy-Item $exe.FullName 'tools/ffmpeg/ffmpeg.exe'
+
+      - name: Build with PyInstaller
+        run: >
+          pyinstaller --noconfirm --clean --onedir --name NiceClip
+          --collect-all faster_whisper
+          --collect-all ctranslate2
+          --collect-all tokenizers
+          --collect-all imageio_ffmpeg
+          --add-data "niceclip\web;niceclip\web"
+          --hidden-import uvicorn.logging
+          --hidden-import uvicorn.protocols.http.auto
+          --hidden-import uvicorn.protocols.websockets.auto
+          --hidden-import uvicorn.lifespan.on
+          niceclip\__main__.py
+
+      - name: Bundle ffmpeg
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force 'dist/NiceClip/ffmpeg' | Out-Null
+          Copy-Item 'tools/ffmpeg/ffmpeg.exe' 'dist/NiceClip/ffmpeg/ffmpeg.exe'
+
+      - name: Smoke test the frozen app
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath 'dist/NiceClip/NiceClip.exe' -ArgumentList '--no-browser','--port','8791' -PassThru
+          Start-Sleep -Seconds 25
+          try {
+            $health = Invoke-RestMethod 'http://127.0.0.1:8791/api/health'
+            $health | ConvertTo-Json
+            if (-not $health.ffmpeg) { throw 'ffmpeg not detected in frozen app' }
+          } finally {
+            Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
+          }
+
+      - name: Zip package
+        shell: pwsh
+        run: Compress-Archive -Path 'dist/NiceClip' -DestinationPath 'NiceClip-windows.zip'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NiceClip-windows
+          path: niceclip/NiceClip-windows.zip
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: niceclip/NiceClip-windows.zip

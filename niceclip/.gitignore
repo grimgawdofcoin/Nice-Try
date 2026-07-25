@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+build/
+dist/
+*.spec
+tools/
+NiceClip.bat
+*.egg-info/

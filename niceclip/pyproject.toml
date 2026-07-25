@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "niceclip"
+version = "0.1.0"
+description = "Local-first AI video clipper: turn long videos into captioned, vertical social clips"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "numpy>=1.24",
+    "faster-whisper>=1.0",
+    "imageio-ffmpeg>=0.4.9",
+]
+
+[project.optional-dependencies]
+ai = ["anthropic>=0.40"]
+build = ["pyinstaller>=6.6"]
+
+[project.scripts]
+niceclip = "niceclip.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["niceclip*"]
+
+[tool.setuptools.package-data]
+niceclip = ["web/*.html"]
