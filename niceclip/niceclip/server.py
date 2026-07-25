@@ -16,7 +16,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 
-from . import __version__, ffmpeg_utils as ff, llm
+from . import __version__, analyzer, ffmpeg_utils as ff, llm
 from .jobs import JobManager
 from .pipeline import DEFAULT_SETTINGS, PipelineRunner
 
@@ -62,6 +62,13 @@ def create_app() -> FastAPI:
             whisper_ok = True
         except ImportError:
             whisper_ok = False
+        # Which speech models this install can load without touching the
+        # network. CI asserts this is non-empty for the packaged build, so a
+        # wrong bundle path can't ship as a silent download-at-runtime.
+        bundled_models = {
+            size: analyzer.find_bundled_whisper_model(size)
+            for size in ("tiny", "base", "small", "medium")
+        }
         return {
             "app": "NiceClip",
             "version": __version__,
@@ -69,6 +76,7 @@ def create_app() -> FastAPI:
             "ffmpeg_path": ffmpeg,
             "captions": subtitles_ok,
             "whisper": whisper_ok,
+            "offline_models": sorted(k for k, v in bundled_models.items() if v),
             "ai_ranking": llm.claude_available(),
             "data_dir": str(base),
             "defaults": DEFAULT_SETTINGS,

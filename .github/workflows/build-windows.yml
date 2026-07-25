@@ -87,6 +87,21 @@ jobs:
           if (-not $health) { throw 'frozen app never became healthy' }
           $health | ConvertTo-Json
           if (-not $health.ffmpeg) { throw 'ffmpeg not detected in frozen app' }
+          if (-not $health.whisper) { throw 'faster-whisper not importable in frozen app' }
+          # The frozen exe must actually FIND its bundled models, not just
+          # ship them — otherwise it silently falls back to downloading at
+          # runtime, which is the exact failure this bundling prevents.
+          $expected = @('base','medium','small','tiny')
+          $found = @($health.offline_models) | Sort-Object
+          # -not $found matters: a 0-object pipeline capture collapses to
+          # $null in PowerShell, and $null -eq 0 is False, so a .Count-only
+          # test would never fire on the empty case.
+          if (-not $found -or $found.Count -eq 0) {
+            throw 'frozen app found NO bundled Whisper models — it would try to download at runtime'
+          }
+          $missing = $expected | Where-Object { $_ -notin $found }
+          if ($missing) { throw "frozen app cannot find bundled model(s): $($missing -join ', ')" }
+          Write-Host "Frozen app resolves all bundled models offline: $($found -join ', ')"
 
       - name: Zip package
         shell: pwsh

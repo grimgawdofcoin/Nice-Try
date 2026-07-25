@@ -4,7 +4,7 @@ app never has to reach huggingface.co at runtime — matches how ffmpeg is
 bundled rather than expected on the user's machine.
 
 Models land in tools/whisper_models/<size>/, which niceclip.analyzer looks
-for automatically (see analyzer._find_bundled_whisper_model).
+for automatically (see analyzer.find_bundled_whisper_model).
 """
 
 from __future__ import annotations

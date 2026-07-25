@@ -29,13 +29,14 @@ from . import ffmpeg_utils as ff
 
 ProgressFn = Callable[[float], None]
 
+ENERGY_WINDOW_S = 0.5
+
 
 class WhisperUnavailable(RuntimeError):
     """Transcription can't run this time (not installed, or the model isn't
     bundled and couldn't be downloaded). Callers should degrade to
     audio-energy-only analysis rather than fail the whole job."""
 
-ENERGY_WINDOW_S = 0.5
 
 # Phrases that historically correlate with retention hooks on short-form video.
 HOOK_PATTERNS = [
@@ -271,7 +272,7 @@ def detect_scenes(
     return ff.parse_showinfo_times(stderr)
 
 
-def _find_bundled_whisper_model(model_size: str) -> Optional[str]:
+def find_bundled_whisper_model(model_size: str) -> Optional[str]:
     """Look for a pre-downloaded, offline-ready model directory so
     transcription never has to reach huggingface.co. Mirrors
     ffmpeg_utils.find_ffmpeg's search order (env var -> frozen-app layout ->
@@ -314,7 +315,7 @@ def transcribe(
             "energy alone, and captions are unavailable."
         ) from e
 
-    model_path = _find_bundled_whisper_model(model_size) or model_size
+    model_path = find_bundled_whisper_model(model_size) or model_size
     try:
         model = WhisperModel(model_path, device="cpu", compute_type="int8")
     except Exception as e:
