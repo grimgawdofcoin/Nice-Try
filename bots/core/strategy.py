@@ -45,6 +45,7 @@ class Strategy:
     spread = 0.0                    # round-trip cost in price units
     flatten_at: Optional[float] = None  # UTC hour to close any open trade
     trade_weekends = False
+    max_leverage: Optional[float] = None  # cap notional at equity * this
 
     def prepare(self, df: pd.DataFrame) -> pd.DataFrame:
         return df

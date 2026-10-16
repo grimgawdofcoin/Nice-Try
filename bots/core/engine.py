@@ -72,6 +72,8 @@ class Result:
     trades: list
     equity: pd.Series
     start_equity: float
+    open_trade: Optional[Trade] = None
+    pending: Optional[Signal] = None
 
     def stats(self) -> dict:
         t = self.trades
@@ -93,7 +95,10 @@ class Result:
         }
 
 
-def backtest(strategy: Strategy, raw: pd.DataFrame, equity: float = 10_000.0) -> Result:
+def backtest(strategy: Strategy, raw: pd.DataFrame, equity: float = 10_000.0,
+             trade_from: Optional[pd.Timestamp] = None, close_at_end: bool = True) -> Result:
+    """trade_from: ignore fills before this time (live warm-up).
+    close_at_end=False leaves the last position open (live mode)."""
     df = strategy.prepare(raw.copy())
     if "atr" not in df:
         raise ValueError(f"{strategy.symbol}: prepare() must add an 'atr' column")
@@ -128,12 +133,16 @@ def backtest(strategy: Strategy, raw: pd.DataFrame, equity: float = 10_000.0) ->
         # 1) Fill the signal from the previous bar.
         if pending is not None and pos is None:
             s, pending = pending, None
-            key = rm.allows(ts, s.direction)
+            key = rm.allows(ts, s.direction) if trade_from is None or ts >= trade_from else None
             fill = o[i] + half_spread * s.direction
             dist = (fill - s.stop) * s.direction
             if key and dist > 0:
                 risk_money = equity * strategy.risk.risk_pct * s.risk_scale
-                pos = Trade(s.direction, ts, fill, s.stop, risk_money / dist, risk_money, s.reason)
+                size = risk_money / dist
+                if strategy.max_leverage:
+                    size = min(size, equity * strategy.max_leverage / fill)
+                    risk_money = size * dist
+                pos = Trade(s.direction, ts, fill, s.stop, size, risk_money, s.reason)
                 pos.initial_size = pos.size
                 tp1 = fill + s.direction * s.tp1_r * dist
                 tp2 = None
@@ -177,14 +186,16 @@ def backtest(strategy: Strategy, raw: pd.DataFrame, equity: float = 10_000.0) ->
 
         # 3) Ask the bot for a new signal (it sees bars up to and including i).
         s = strategy.on_bar(i, df)
-        if s is not None and pos is None and i + 1 < len(df):
+        if s is not None and pos is None:
             pending = s
 
         curve[i] = equity
 
-    if pos is not None:
+    if pos is not None and close_at_end:
         close(pos, c[-1], 1.0, idx[-1], "end_of_data")
         trades.append(pos)
         curve[-1] = equity
+        pos = None
 
-    return Result(strategy.symbol, trades, pd.Series(curve, index=idx), start)
+    return Result(strategy.symbol, trades, pd.Series(curve, index=idx), start,
+                  open_trade=pos, pending=pending if pos is None else None)
